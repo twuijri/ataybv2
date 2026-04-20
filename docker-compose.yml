@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    container_name: link-manager
+    ports:
+      - "3000:3000"
+    volumes:
+      - link-data:/app/data
+      - link-uploads:/app/public/uploads
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+
+volumes:
+  link-data:
+  link-uploads:
