@@ -12,6 +12,20 @@ export default function Home() {
 
   const radius = Number.isFinite(config.buttonRadius) ? config.buttonRadius : 18;
   const overlay = Number.isFinite(config.overlayOpacity) ? config.overlayOpacity : 0.55;
+  const glassOp = Number.isFinite(config.glassOpacity) ? config.glassOpacity : 0.1;
+  const glassBlur = Number.isFinite(config.glassBlur) ? config.glassBlur : 18;
+  const glassBorderOp = Number.isFinite(config.glassBorderOpacity) ? config.glassBorderOpacity : 0.22;
+
+  const hexToRgba = (hex, a = 1) => {
+    if (!hex) return null;
+    const h = hex.replace('#', '');
+    const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    if (n.length !== 6) return hex;
+    const r = parseInt(n.slice(0, 2), 16);
+    const g = parseInt(n.slice(2, 4), 16);
+    const b = parseInt(n.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  };
 
   return (
     <main className="relative min-h-screen overflow-hidden" style={{ color: config.textColor || '#ffffff' }}>
@@ -70,15 +84,19 @@ export default function Home() {
         <div
           className="fade-in relative w-full rounded-[28px] p-5 sm:p-6"
           style={{
-            background: 'rgba(255, 255, 255, 0.10)',
-            backdropFilter: 'blur(18px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(18px) saturate(140%)',
-            border: '1px solid rgba(255, 255, 255, 0.22)',
+            background: `rgba(255, 255, 255, ${glassOp})`,
+            backdropFilter: `blur(${glassBlur}px) saturate(140%)`,
+            WebkitBackdropFilter: `blur(${glassBlur}px) saturate(140%)`,
+            border: `1px solid rgba(255, 255, 255, ${glassBorderOp})`,
             boxShadow: '0 20px 60px -20px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.15)'
           }}
         >
           <div className="flex flex-col gap-3">
-            {links.map((link) => (
+            {links.map((link) => {
+              const op = Number.isFinite(link.colorOpacity) ? link.colorOpacity : 1;
+              const bg = link.color ? hexToRgba(link.color, op) : `rgba(255,255,255,${op === 1 ? 0.95 : op})`;
+              const textLight = !!link.color && op >= 0.5;
+              return (
               <a
                 key={link.id}
                 href={`/api/track?id=${link.id}&url=${encodeURIComponent(link.url)}`}
@@ -87,8 +105,8 @@ export default function Home() {
                 className="link-btn group relative flex items-center gap-3 overflow-hidden px-3.5 py-3 text-right font-bold"
                 style={{
                   borderRadius: radius,
-                  background: link.color || 'rgba(255,255,255,0.95)',
-                  color: link.color ? '#ffffff' : '#1F140A',
+                  background: bg,
+                  color: textLight ? '#ffffff' : '#1F140A',
                   boxShadow: '0 8px 22px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.35)'
                 }}
               >
@@ -114,7 +132,8 @@ export default function Home() {
                   <path d="M15 18l-6-6 6-6" />
                 </svg>
               </a>
-            ))}
+              );
+            })}
 
             {links.length === 0 && (
               <div className="rounded-2xl bg-white/10 p-5 text-center text-sm">

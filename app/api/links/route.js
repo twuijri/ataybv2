@@ -18,7 +18,7 @@ export async function POST(request) {
   if (!(await requireAuth())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const { title, url, icon, color } = await request.json();
+  const { title, url, icon, color, colorOpacity } = await request.json();
   const links = db.getLinks();
 
   const newLink = {
@@ -27,6 +27,7 @@ export async function POST(request) {
     url,
     icon: icon || null,
     color: color || null,
+    colorOpacity: Number.isFinite(colorOpacity) ? colorOpacity : 1,
     clicks: 0,
     order: links.length
   };
@@ -40,7 +41,7 @@ export async function PUT(request) {
   if (!(await requireAuth())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const { id, title, url, icon, color } = await request.json();
+  const { id, title, url, icon, color, colorOpacity } = await request.json();
   const links = db.getLinks();
   const link = links.find(l => l.id === id);
   if (!link) return NextResponse.json({ error: 'not found' }, { status: 404 });
@@ -48,6 +49,7 @@ export async function PUT(request) {
   if (url !== undefined) link.url = url;
   if (icon !== undefined) link.icon = icon;
   if (color !== undefined) link.color = color;
+  if (colorOpacity !== undefined) link.colorOpacity = colorOpacity;
   db.saveLinks(links);
   return NextResponse.json(link);
 }

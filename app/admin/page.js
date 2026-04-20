@@ -147,7 +147,7 @@ function Overview({ stats }) {
 
 function LinksTab({ links, reload, toast }) {
   const upload = useUpload();
-  const [form, setForm] = useState({ title: '', url: '', icon: '', color: '' });
+  const [form, setForm] = useState({ title: '', url: '', icon: '', color: '', colorOpacity: 1 });
   const [editingId, setEditingId] = useState(null);
   const [editDraft, setEditDraft] = useState({});
   const [uploading, setUploading] = useState(false);
@@ -161,7 +161,7 @@ function LinksTab({ links, reload, toast }) {
       body: JSON.stringify(form)
     });
     if (res.ok) {
-      setForm({ title: '', url: '', icon: '', color: '' });
+      setForm({ title: '', url: '', icon: '', color: '', colorOpacity: 1 });
       toast('تمت إضافة الرابط');
       reload();
     }
@@ -243,6 +243,7 @@ function LinksTab({ links, reload, toast }) {
                 className="flex-1 rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 text-xs text-left outline-none"
                 placeholder="أو رابط للأيقونة" dir="ltr" />
             </div>
+            <p className="mt-1 text-xs text-[color:var(--muted)]">المقاس المفضّل: 128×128 بكسل مربعة (PNG شفاف)</p>
           </div>
           <div>
             <label className="mb-1 block text-sm font-bold">لون الزر (اختياري)</label>
@@ -252,6 +253,12 @@ function LinksTab({ links, reload, toast }) {
               <input value={form.color || ''} onChange={e => setForm({ ...form, color: e.target.value })}
                 className="flex-1 rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 text-sm outline-none" placeholder="افتراضي (أبيض)" />
               {form.color && <button type="button" onClick={() => setForm({ ...form, color: '' })} className="text-xs text-[color:var(--muted)] underline">مسح</button>}
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <label className="min-w-fit text-xs text-[color:var(--muted)]">شفافية: {Math.round((form.colorOpacity ?? 1) * 100)}%</label>
+              <input type="range" min="0.1" max="1" step="0.05" value={form.colorOpacity ?? 1}
+                onChange={e => setForm({ ...form, colorOpacity: parseFloat(e.target.value) })}
+                className="flex-1 accent-[color:var(--brand)]" />
             </div>
           </div>
           <div className="md:col-span-2">
@@ -301,9 +308,18 @@ function LinksTab({ links, reload, toast }) {
                         </label>
                         <input value={editDraft.icon || ''} onChange={e => setEditDraft({ ...editDraft, icon: e.target.value })} className="flex-1 rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-xs text-left outline-none" dir="ltr" placeholder="رابط الأيقونة" />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <input type="color" value={editDraft.color || '#ffffff'} onChange={e => setEditDraft({ ...editDraft, color: e.target.value })} className="h-9 w-12 rounded-lg border border-[#E6D9C0]" />
-                        <input value={editDraft.color || ''} onChange={e => setEditDraft({ ...editDraft, color: e.target.value })} className="flex-1 rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-xs outline-none" placeholder="لون الزر" />
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <input type="color" value={editDraft.color || '#ffffff'} onChange={e => setEditDraft({ ...editDraft, color: e.target.value })} className="h-9 w-12 rounded-lg border border-[#E6D9C0]" />
+                          <input value={editDraft.color || ''} onChange={e => setEditDraft({ ...editDraft, color: e.target.value })} className="flex-1 rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-xs outline-none" placeholder="لون الزر" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="min-w-fit text-[10px] text-[color:var(--muted)]">شفافية: {Math.round((editDraft.colorOpacity ?? 1) * 100)}%</span>
+                          <input type="range" min="0.1" max="1" step="0.05"
+                            value={editDraft.colorOpacity ?? 1}
+                            onChange={e => setEditDraft({ ...editDraft, colorOpacity: parseFloat(e.target.value) })}
+                            className="flex-1 accent-[color:var(--brand)]" />
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -324,7 +340,7 @@ function LinksTab({ links, reload, toast }) {
                       </>
                     ) : (
                       <>
-                        <button onClick={() => { setEditingId(l.id); setEditDraft({ title: l.title, url: l.url, icon: l.icon || '', color: l.color || '' }); }} className="rounded-lg bg-[color:var(--brand)] px-3 py-2 text-xs font-bold text-white hover:bg-[color:var(--brand-dark)]">تعديل</button>
+                        <button onClick={() => { setEditingId(l.id); setEditDraft({ title: l.title, url: l.url, icon: l.icon || '', color: l.color || '', colorOpacity: l.colorOpacity ?? 1 }); }} className="rounded-lg bg-[color:var(--brand)] px-3 py-2 text-xs font-bold text-white hover:bg-[color:var(--brand-dark)]">تعديل</button>
                         <button onClick={() => handleDelete(l.id)} className="rounded-lg bg-red-500 px-3 py-2 text-xs font-bold text-white hover:bg-red-600">حذف</button>
                       </>
                     )}
@@ -474,6 +490,7 @@ function AppearanceTab({ config, setConfig, save, toast }) {
               <svg viewBox="0 0 24 24" width="32" height="32" className="mx-auto mb-2 text-[color:var(--brand)]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
               <div className="font-bold text-[color:var(--brand-dark)]">{uploadingVid ? 'جاري الرفع...' : 'رفع فيديو خلفية'}</div>
               <div className="mt-1 text-xs text-[color:var(--muted)]">MP4 / WebM — حتى 50MB</div>
+              <div className="mt-0.5 text-xs text-[color:var(--muted)]">المقاس المفضّل: 1080×1920 عمودي، مدة 10–20 ثانية، 30fps، بدون صوت</div>
               <input type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden" onChange={onVideo} />
             </label>
             {config.backgroundVideo && (
@@ -507,12 +524,58 @@ function AppearanceTab({ config, setConfig, save, toast }) {
                 </>
               )}
             </div>
+            <p className="mt-1 text-xs text-[color:var(--muted)]">المقاس المفضّل: 1080×1920 بكسل (عمودي للجوال) — تُستخدم كـ poster للفيديو</p>
           </div>
           <div>
             <label className="mb-1 block text-sm font-bold">شدة التعتيم: {Math.round((config.overlayOpacity || 0) * 100)}%</label>
             <input type="range" min="0" max="1" step="0.05" value={config.overlayOpacity ?? 0.55}
               onChange={e => setConfig({ ...config, overlayOpacity: parseFloat(e.target.value) })}
               className="w-full accent-[color:var(--brand)]" />
+            <p className="mt-1 text-xs text-[color:var(--muted)]">يتحكم بوضوح الفيديو خلف المحتوى</p>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <h3 className="mb-4 text-lg font-bold text-[color:var(--brand-dark)]">المربع الزجاجي</h3>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-sm font-bold">شفافية المربع: {Math.round((config.glassOpacity ?? 0.1) * 100)}%</label>
+            <input type="range" min="0" max="0.6" step="0.01" value={config.glassOpacity ?? 0.1}
+              onChange={e => setConfig({ ...config, glassOpacity: parseFloat(e.target.value) })}
+              className="w-full accent-[color:var(--brand)]" />
+            <p className="mt-1 text-xs text-[color:var(--muted)]">0% = شفاف تماماً، 60% = واضح</p>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-bold">شدة الضبابية: {config.glassBlur ?? 18}px</label>
+            <input type="range" min="0" max="40" step="1" value={config.glassBlur ?? 18}
+              onChange={e => setConfig({ ...config, glassBlur: parseInt(e.target.value) })}
+              className="w-full accent-[color:var(--brand)]" />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-bold">حدود المربع: {Math.round((config.glassBorderOpacity ?? 0.22) * 100)}%</label>
+            <input type="range" min="0" max="1" step="0.02" value={config.glassBorderOpacity ?? 0.22}
+              onChange={e => setConfig({ ...config, glassBorderOpacity: parseFloat(e.target.value) })}
+              className="w-full accent-[color:var(--brand)]" />
+          </div>
+        </div>
+
+        <div
+          className="mt-5 flex h-28 items-center justify-center rounded-2xl"
+          style={{
+            background: 'linear-gradient(135deg, #C9884A, #3A2412)'
+          }}
+        >
+          <div
+            className="flex h-20 w-64 items-center justify-center rounded-2xl text-sm font-bold text-white"
+            style={{
+              background: `rgba(255,255,255,${config.glassOpacity ?? 0.1})`,
+              backdropFilter: `blur(${config.glassBlur ?? 18}px) saturate(140%)`,
+              WebkitBackdropFilter: `blur(${config.glassBlur ?? 18}px) saturate(140%)`,
+              border: `1px solid rgba(255,255,255,${config.glassBorderOpacity ?? 0.22})`
+            }}
+          >
+            معاينة المربع الزجاجي
           </div>
         </div>
       </Card>
@@ -535,6 +598,7 @@ function AppearanceTab({ config, setConfig, save, toast }) {
             <button onClick={() => setConfig({ ...config, siteLogo: null })} className="text-sm text-red-600 underline">إزالة</button>
           )}
         </div>
+        <p className="mt-3 text-xs text-[color:var(--muted)]">المقاس المفضّل: 512×512 بكسل مربعة (PNG شفاف) — يُعرض بشكل دائري</p>
       </Card>
 
       <Card>

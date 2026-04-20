@@ -1,0 +1,22 @@
+services:
+  app:
+    image: ghcr.io/twuijri/ataybv2:latest
+    container_name: ataybv2
+    restart: unless-stopped
+    expose:
+      - "3000"
+    volumes:
+      - ataybv2-data:/app/data
+      - ataybv2-uploads:/app/public/uploads
+    environment:
+      - NODE_ENV=production
+    networks:
+      - npm_default
+
+volumes:
+  ataybv2-data:
+  ataybv2-uploads:
+
+networks:
+  npm_default:
+    external: true
