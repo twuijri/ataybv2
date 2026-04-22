@@ -147,7 +147,12 @@ function Overview({ stats }) {
 
 function LinksTab({ links, reload, toast }) {
   const upload = useUpload();
-  const [form, setForm] = useState({ title: '', url: '', icon: '', color: '', colorOpacity: 1 });
+  const [form, setForm] = useState({
+    title: '', title_en: '', url: '', icon: '', color: '', colorOpacity: 1,
+    isGroup: false, parentId: '', tagline: '', tagline_en: '',
+    linkType: 'general', appStoreUrl: '', playStoreUrl: ''
+  });
+  const groups = links.filter(l => l.isGroup);
   const [editingId, setEditingId] = useState(null);
   const [editDraft, setEditDraft] = useState({});
   const [uploading, setUploading] = useState(false);
@@ -155,14 +160,22 @@ function LinksTab({ links, reload, toast }) {
 
   const handleAdd = async (e) => {
     e.preventDefault();
+    const payload = {
+      ...form,
+      parentId: form.parentId === '' ? null : parseInt(form.parentId)
+    };
     const res = await fetch('/api/links', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
+      body: JSON.stringify(payload)
     });
     if (res.ok) {
-      setForm({ title: '', url: '', icon: '', color: '', colorOpacity: 1 });
-      toast('تمت إضافة الرابط');
+      setForm({
+        title: '', title_en: '', url: '', icon: '', color: '', colorOpacity: 1,
+        isGroup: false, parentId: '', tagline: '', tagline_en: '',
+        linkType: 'general', appStoreUrl: '', playStoreUrl: ''
+      });
+      toast('تمت الإضافة');
       reload();
     }
   };
@@ -175,10 +188,15 @@ function LinksTab({ links, reload, toast }) {
   };
 
   const saveEdit = async () => {
+    const payload = {
+      id: editingId,
+      ...editDraft,
+      parentId: editDraft.parentId === '' || editDraft.parentId == null ? null : parseInt(editDraft.parentId)
+    };
     await fetch('/api/links', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: editingId, ...editDraft })
+      body: JSON.stringify(payload)
     });
     setEditingId(null);
     toast('تم التحديث');
@@ -219,18 +237,104 @@ function LinksTab({ links, reload, toast }) {
       <Card>
         <h3 className="mb-4 text-lg font-bold text-[color:var(--brand-dark)]">إضافة رابط جديد</h3>
         <form onSubmit={handleAdd} className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
+          <div className="md:col-span-2 flex flex-wrap items-center gap-4 rounded-xl bg-[color:var(--surface)] p-3 ring-1 ring-black/5">
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-bold">
+              <input type="checkbox" checked={form.isGroup}
+                onChange={e => setForm({ ...form, isGroup: e.target.checked, parentId: e.target.checked ? '' : form.parentId })}
+                className="h-4 w-4 accent-[color:var(--brand)]" />
+              قسم/فرع (يفتح صفحة فرعية)
+            </label>
+            {!form.isGroup && groups.length > 0 && (
+              <label className="flex items-center gap-2 text-sm">
+                <span className="font-bold">ضمن قسم:</span>
+                <select value={form.parentId} onChange={e => setForm({ ...form, parentId: e.target.value })}
+                  className="rounded-lg border border-[#E6D9C0] bg-white px-3 py-1.5 text-sm">
+                  <option value="">— بلا قسم (الصفحة الرئيسية) —</option>
+                  {groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
+                </select>
+              </label>
+            )}
+          </div>
+          <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-bold">الاسم</label>
-            <input required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-              className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--accent-light)]"
-              placeholder="مثلاً: هنقرستيشن" />
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="min-w-[34px] rounded bg-[color:var(--accent-light)] px-2 py-1 text-center text-[10px] font-bold text-[color:var(--brand-dark)]">AR</span>
+                <input required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
+                  className="flex-1 rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 outline-none focus:border-[color:var(--brand)]"
+                  placeholder={form.isGroup ? 'مثلاً: فروع الرياض' : 'مثلاً: هنقرستيشن'} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="min-w-[34px] rounded bg-[color:var(--brand)] px-2 py-1 text-center text-[10px] font-bold text-white">EN</span>
+                <input value={form.title_en} onChange={e => setForm({ ...form, title_en: e.target.value })}
+                  className="flex-1 rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 text-left outline-none focus:border-[color:var(--brand)]"
+                  placeholder={form.isGroup ? 'e.g. Riyadh Branches' : 'e.g. HungerStation'} dir="ltr" />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-bold">الرابط</label>
-            <input required type="url" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })}
-              className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 text-left outline-none focus:border-[color:var(--brand)] focus:ring-4 focus:ring-[color:var(--accent-light)]"
-              placeholder="https://..." dir="ltr" />
-          </div>
+
+          {form.isGroup ? (
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-sm font-bold">وصف القسم (اختياري)</label>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="min-w-[34px] rounded bg-[color:var(--accent-light)] px-2 py-1 text-center text-[10px] font-bold text-[color:var(--brand-dark)]">AR</span>
+                  <input value={form.tagline} onChange={e => setForm({ ...form, tagline: e.target.value })}
+                    className="flex-1 rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 outline-none focus:border-[color:var(--brand)]"
+                    placeholder="يظهر أسفل عنوان الصفحة الفرعية" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="min-w-[34px] rounded bg-[color:var(--brand)] px-2 py-1 text-center text-[10px] font-bold text-white">EN</span>
+                  <input value={form.tagline_en} onChange={e => setForm({ ...form, tagline_en: e.target.value })}
+                    className="flex-1 rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 text-left outline-none focus:border-[color:var(--brand)]"
+                    placeholder="Appears under subpage title" dir="ltr" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded-xl bg-[color:var(--surface)] p-3 ring-1 ring-black/5">
+                <span className="text-sm font-bold">نوع الرابط:</span>
+                <div className="flex gap-1 rounded-lg bg-white p-1 ring-1 ring-[#E6D9C0]">
+                  <button type="button" onClick={() => setForm({ ...form, linkType: 'general' })}
+                    className={`rounded-md px-3 py-1 text-xs font-bold transition ${form.linkType === 'general' ? 'bg-[color:var(--brand)] text-white' : 'text-[color:var(--muted)]'}`}>
+                    🔗 رابط عام
+                  </button>
+                  <button type="button" onClick={() => setForm({ ...form, linkType: 'app' })}
+                    className={`rounded-md px-3 py-1 text-xs font-bold transition ${form.linkType === 'app' ? 'bg-[color:var(--brand)] text-white' : 'text-[color:var(--muted)]'}`}>
+                    📱 تطبيق (ذكي)
+                  </button>
+                </div>
+                {form.linkType === 'app' && (
+                  <span className="text-xs text-[color:var(--muted)]">يوجّه المستخدم تلقائياً للمتجر حسب نوع جهازه</span>
+                )}
+              </div>
+
+              {form.linkType === 'general' ? (
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm font-bold">الرابط</label>
+                  <input required type="url" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })}
+                    className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 text-left outline-none focus:border-[color:var(--brand)]"
+                    placeholder="https://..." dir="ltr" />
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="mb-1 block text-sm font-bold"> رابط App Store (iOS)</label>
+                    <input type="url" value={form.appStoreUrl} onChange={e => setForm({ ...form, appStoreUrl: e.target.value })}
+                      className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 text-left outline-none focus:border-[color:var(--brand)]"
+                      placeholder="https://apps.apple.com/..." dir="ltr" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-bold"> رابط Google Play (Android)</label>
+                    <input type="url" value={form.playStoreUrl} onChange={e => setForm({ ...form, playStoreUrl: e.target.value })}
+                      className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 text-left outline-none focus:border-[color:var(--brand)]"
+                      placeholder="https://play.google.com/..." dir="ltr" />
+                  </div>
+                </>
+              )}
+            </>
+          )}
           <div>
             <label className="mb-1 block text-sm font-bold">الأيقونة</label>
             <div className="flex items-center gap-2">
@@ -280,6 +384,7 @@ function LinksTab({ links, reload, toast }) {
           <div className="space-y-2">
             {links.map(l => {
               const editing = editingId === l.id;
+              const parent = l.parentId ? links.find(x => x.id === l.parentId) : null;
               return (
                 <div
                   key={l.id}
@@ -287,7 +392,7 @@ function LinksTab({ links, reload, toast }) {
                   onDragStart={() => onDragStart(l.id)}
                   onDragOver={onDragOver}
                   onDrop={() => onDrop(l.id)}
-                  className="flex items-center gap-3 rounded-xl bg-[color:var(--surface)] p-3 ring-1 ring-black/5"
+                  className={`flex items-center gap-3 rounded-xl p-3 ring-1 ring-black/5 ${l.isGroup ? 'bg-[color:var(--accent-light)]/50' : 'bg-[color:var(--surface)]'} ${parent ? 'mr-6' : ''}`}
                 >
                   <span className="drag-handle text-[color:var(--muted)]">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
@@ -299,8 +404,62 @@ function LinksTab({ links, reload, toast }) {
                   )}
                   {editing ? (
                     <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2">
-                      <input value={editDraft.title || ''} onChange={e => setEditDraft({ ...editDraft, title: e.target.value })} className="rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-sm outline-none" />
-                      <input value={editDraft.url || ''} onChange={e => setEditDraft({ ...editDraft, url: e.target.value })} className="rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-sm text-left outline-none" dir="ltr" />
+                      <div className="md:col-span-2 flex flex-wrap items-center gap-3 rounded-lg bg-white/70 p-2 text-xs">
+                        <label className="flex cursor-pointer items-center gap-1.5 font-bold">
+                          <input type="checkbox" checked={!!editDraft.isGroup}
+                            onChange={e => setEditDraft({ ...editDraft, isGroup: e.target.checked, parentId: e.target.checked ? '' : editDraft.parentId })}
+                            className="h-3.5 w-3.5 accent-[color:var(--brand)]" />
+                          قسم
+                        </label>
+                        {!editDraft.isGroup && (
+                          <label className="flex items-center gap-1.5">
+                            <span className="font-bold">ضمن:</span>
+                            <select value={editDraft.parentId ?? ''} onChange={e => setEditDraft({ ...editDraft, parentId: e.target.value })}
+                              className="rounded border border-[#E6D9C0] bg-white px-2 py-1 text-xs">
+                              <option value="">— بلا قسم —</option>
+                              {groups.filter(g => g.id !== l.id).map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
+                            </select>
+                          </label>
+                        )}
+                      </div>
+                      <div className="md:col-span-2 flex items-center gap-2">
+                        <span className="min-w-[26px] rounded bg-[color:var(--accent-light)] px-1.5 py-0.5 text-center text-[10px] font-bold">AR</span>
+                        <input value={editDraft.title || ''} onChange={e => setEditDraft({ ...editDraft, title: e.target.value })} placeholder="الاسم" className="flex-1 rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-sm outline-none" />
+                      </div>
+                      <div className="md:col-span-2 flex items-center gap-2">
+                        <span className="min-w-[26px] rounded bg-[color:var(--brand)] px-1.5 py-0.5 text-center text-[10px] font-bold text-white">EN</span>
+                        <input value={editDraft.title_en || ''} onChange={e => setEditDraft({ ...editDraft, title_en: e.target.value })} placeholder="Name (English)" className="flex-1 rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-sm text-left outline-none" dir="ltr" />
+                      </div>
+                      {editDraft.isGroup ? (
+                        <>
+                          <div className="md:col-span-2 flex items-center gap-2">
+                            <span className="min-w-[26px] rounded bg-[color:var(--accent-light)] px-1.5 py-0.5 text-center text-[10px] font-bold">AR</span>
+                            <input value={editDraft.tagline || ''} onChange={e => setEditDraft({ ...editDraft, tagline: e.target.value })} placeholder="وصف القسم" className="flex-1 rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-sm outline-none" />
+                          </div>
+                          <div className="md:col-span-2 flex items-center gap-2">
+                            <span className="min-w-[26px] rounded bg-[color:var(--brand)] px-1.5 py-0.5 text-center text-[10px] font-bold text-white">EN</span>
+                            <input value={editDraft.tagline_en || ''} onChange={e => setEditDraft({ ...editDraft, tagline_en: e.target.value })} placeholder="Tagline" className="flex-1 rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-sm text-left outline-none" dir="ltr" />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="md:col-span-2 flex items-center gap-2 rounded-lg bg-white/70 p-1.5 text-xs">
+                            <span className="font-bold">النوع:</span>
+                            <button type="button" onClick={() => setEditDraft({ ...editDraft, linkType: 'general' })}
+                              className={`rounded px-2 py-0.5 ${(editDraft.linkType || 'general') === 'general' ? 'bg-[color:var(--brand)] text-white' : ''}`}>عام</button>
+                            <button type="button" onClick={() => setEditDraft({ ...editDraft, linkType: 'app' })}
+                              className={`rounded px-2 py-0.5 ${editDraft.linkType === 'app' ? 'bg-[color:var(--brand)] text-white' : ''}`}>تطبيق</button>
+                          </div>
+                          {(editDraft.linkType || 'general') === 'general' ? (
+                            <input value={editDraft.url || ''} onChange={e => setEditDraft({ ...editDraft, url: e.target.value })} placeholder="الرابط" className="md:col-span-2 rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-sm text-left outline-none" dir="ltr" />
+                          ) : (
+                            <>
+                              <input value={editDraft.appStoreUrl || ''} onChange={e => setEditDraft({ ...editDraft, appStoreUrl: e.target.value })} placeholder="App Store URL (iOS)" className="rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-sm text-left outline-none" dir="ltr" />
+                              <input value={editDraft.playStoreUrl || ''} onChange={e => setEditDraft({ ...editDraft, playStoreUrl: e.target.value })} placeholder="Play Store URL (Android)" className="rounded-lg border border-[#E6D9C0] bg-white px-3 py-2 text-sm text-left outline-none" dir="ltr" />
+                            </>
+                          )}
+                        </>
+                      )}
                       <div className="flex items-center gap-2">
                         <label className="cursor-pointer rounded-lg bg-[color:var(--accent)] px-3 py-2 text-xs font-bold text-white">
                           رفع أيقونة
@@ -324,8 +483,18 @@ function LinksTab({ links, reload, toast }) {
                     </div>
                   ) : (
                     <div className="flex-1">
-                      <div className="font-bold text-[color:var(--brand-dark)]">{l.title}</div>
-                      <div className="text-xs text-[color:var(--muted)] truncate" dir="ltr">{l.url}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-[color:var(--brand-dark)]">{l.title}</span>
+                        {l.isGroup && (
+                          <span className="rounded-full bg-[color:var(--brand)] px-2 py-0.5 text-[10px] font-bold text-white">قسم</span>
+                        )}
+                        {parent && (
+                          <span className="rounded-full bg-[color:var(--muted)]/20 px-2 py-0.5 text-[10px] text-[color:var(--muted)]">في: {parent.title}</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-[color:var(--muted)] truncate" dir="ltr">
+                        {l.isGroup ? (l.tagline || `يفتح ${links.filter(x => x.parentId === l.id).length} روابط فرعية`) : l.url}
+                      </div>
                     </div>
                   )}
                   <div className="hidden text-center md:block">
@@ -340,7 +509,15 @@ function LinksTab({ links, reload, toast }) {
                       </>
                     ) : (
                       <>
-                        <button onClick={() => { setEditingId(l.id); setEditDraft({ title: l.title, url: l.url, icon: l.icon || '', color: l.color || '', colorOpacity: l.colorOpacity ?? 1 }); }} className="rounded-lg bg-[color:var(--brand)] px-3 py-2 text-xs font-bold text-white hover:bg-[color:var(--brand-dark)]">تعديل</button>
+                        <button onClick={() => { setEditingId(l.id); setEditDraft({
+                          title: l.title, title_en: l.title_en || '',
+                          url: l.url || '', icon: l.icon || '',
+                          color: l.color || '', colorOpacity: l.colorOpacity ?? 1,
+                          isGroup: !!l.isGroup, parentId: l.parentId ?? '',
+                          tagline: l.tagline || '', tagline_en: l.tagline_en || '',
+                          linkType: l.linkType || 'general',
+                          appStoreUrl: l.appStoreUrl || '', playStoreUrl: l.playStoreUrl || ''
+                        }); }} className="rounded-lg bg-[color:var(--brand)] px-3 py-2 text-xs font-bold text-white hover:bg-[color:var(--brand-dark)]">تعديل</button>
                         <button onClick={() => handleDelete(l.id)} className="rounded-lg bg-red-500 px-3 py-2 text-xs font-bold text-white hover:bg-red-600">حذف</button>
                       </>
                     )}
@@ -642,26 +819,43 @@ function AppearanceTab({ config, setConfig, save, toast }) {
   );
 }
 
+function BilingualField({ label, arKey, config, setConfig, placeholderAr = '', placeholderEn = '' }) {
+  const enKey = arKey + '_en';
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-bold">{label}</label>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="min-w-[34px] rounded bg-[color:var(--accent-light)] px-2 py-1 text-center text-[10px] font-bold text-[color:var(--brand-dark)]">AR</span>
+          <input value={config[arKey] || ''} onChange={e => setConfig({ ...config, [arKey]: e.target.value })}
+            placeholder={placeholderAr}
+            className="flex-1 rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 outline-none focus:border-[color:var(--brand)]" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="min-w-[34px] rounded bg-[color:var(--brand)] px-2 py-1 text-center text-[10px] font-bold text-white">EN</span>
+          <input value={config[enKey] || ''} onChange={e => setConfig({ ...config, [enKey]: e.target.value })}
+            placeholder={placeholderEn} dir="ltr"
+            className="flex-1 rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 text-left outline-none focus:border-[color:var(--brand)]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SettingsTab({ config, setConfig, save }) {
   return (
     <div className="space-y-6">
       <Card>
-        <h3 className="mb-4 text-lg font-bold text-[color:var(--brand-dark)]">معلومات الموقع</h3>
+        <h3 className="mb-4 text-lg font-bold text-[color:var(--brand-dark)]">معلومات الموقع (عربي / إنجليزي)</h3>
+        <p className="mb-4 text-xs text-[color:var(--muted)]">إذا تركت الحقل الإنجليزي فارغاً، سيُعرض النص العربي كبديل</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-bold">عنوان الموقع</label>
-            <input value={config.siteTitle || ''} onChange={e => setConfig({ ...config, siteTitle: e.target.value })}
-              className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 outline-none focus:border-[color:var(--brand)]" />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-bold">وصف قصير</label>
-            <input value={config.siteTagline || ''} onChange={e => setConfig({ ...config, siteTagline: e.target.value })}
-              className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 outline-none focus:border-[color:var(--brand)]" />
-          </div>
+          <BilingualField label="عنوان الموقع" arKey="siteTitle" config={config} setConfig={setConfig}
+            placeholderAr="اطلب الحين" placeholderEn="Order Now" />
+          <BilingualField label="وصف قصير" arKey="siteTagline" config={config} setConfig={setConfig}
+            placeholderAr="اختر تطبيق التوصيل المفضل" placeholderEn="Pick your favorite delivery app" />
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-bold">نص الفوتر</label>
-            <input value={config.footerText || ''} onChange={e => setConfig({ ...config, footerText: e.target.value })}
-              className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 outline-none focus:border-[color:var(--brand)]" />
+            <BilingualField label="نص الفوتر" arKey="footerText" config={config} setConfig={setConfig}
+              placeholderAr="© 2026 جميع الحقوق محفوظة" placeholderEn="© 2026 All rights reserved" />
           </div>
         </div>
       </Card>
@@ -676,11 +870,10 @@ function SettingsTab({ config, setConfig, save }) {
 }
 
 function AccountTab({ toast }) {
-  const [me, setMe] = useState({ adminUsername: '' });
   const [form, setForm] = useState({ currentPassword: '', newUsername: '', newPassword: '' });
 
   useEffect(() => {
-    fetch('/api/account').then(r => r.json()).then(d => { setMe(d); setForm(f => ({ ...f, newUsername: d.adminUsername || '' })); });
+    fetch('/api/account').then(r => r.json()).then(d => { setForm(f => ({ ...f, newUsername: d.adminUsername || '' })); });
   }, []);
 
   const save = async (e) => {

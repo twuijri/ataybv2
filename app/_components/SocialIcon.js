@@ -81,6 +81,21 @@ export const SOCIAL_LABELS = {
   link: 'رابط'
 };
 
+export const SOCIAL_LABELS_EN = {
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  snapchat: 'Snapchat',
+  whatsapp: 'WhatsApp',
+  x: 'X',
+  twitter: 'Twitter',
+  youtube: 'YouTube',
+  facebook: 'Facebook',
+  phone: 'Call',
+  email: 'Email',
+  location: 'Location',
+  link: 'Link'
+};
+
 export default function SocialIcon({ platform, className = 'w-5 h-5' }) {
   const icon = SOCIAL_ICONS[platform] || SOCIAL_ICONS.link;
   return <span className={className} aria-hidden>{icon}</span>;
