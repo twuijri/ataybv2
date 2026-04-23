@@ -775,7 +775,7 @@ function AppearanceTab({ config, setConfig, save, toast }) {
             <button onClick={() => setConfig({ ...config, siteLogo: null })} className="text-sm text-red-600 underline">إزالة</button>
           )}
         </div>
-        <p className="mt-3 text-xs text-[color:var(--muted)]">المقاس المفضّل: 512×512 بكسل مربعة (PNG شفاف) — يُعرض بشكل دائري</p>
+        <p className="mt-3 text-xs text-[color:var(--muted)]">المقاس المفضّل: 512×512 بكسل مربعة (PNG شفاف)</p>
       </Card>
 
       <Card>

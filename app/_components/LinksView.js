@@ -64,12 +64,12 @@ export default function LinksView({ title, tagline, logo, links, social, config,
 
         <div className="fade-in mb-6 flex flex-col items-center text-center">
           {logo ? (
-            <div className="logo-float mb-4 h-24 w-24 overflow-hidden rounded-full bg-white/15 p-1 ring-1 ring-white/30 backdrop-blur-md">
-              <img src={logo} alt={title || ''} className="h-full w-full rounded-full object-cover" />
+            <div className="logo-float mb-4 h-24 w-24 overflow-hidden rounded-2xl bg-white/15 p-1 ring-1 ring-white/30 backdrop-blur-md">
+              <img src={logo} alt={title || ''} className="h-full w-full rounded-xl object-cover" />
             </div>
           ) : (
             <div
-              className="logo-float mb-4 flex h-24 w-24 items-center justify-center rounded-full ring-1 ring-white/30"
+              className="logo-float mb-4 flex h-24 w-24 items-center justify-center rounded-2xl ring-1 ring-white/30"
               style={{ background: `linear-gradient(135deg, ${config.accentColor || '#D4A95A'}, ${config.brandColor || '#8B5E34'})` }}
             >
               <span className="text-3xl font-bold text-white/95">{(title || 'A').slice(0, 1)}</span>
