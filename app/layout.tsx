@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Tajawal } from "next/font/google";
+import { cookies, headers } from "next/headers";
 import "./globals.css";
-// @ts-ignore -- ملف JS بدون تعريفات أنواع
 import { db } from "@/lib/db";
+import { pick, readLangFromCookie } from "@/lib/i18n";
 
 const tajawal = Tajawal({
   weight: ["400", "500", "700", "800"],
@@ -12,15 +13,59 @@ const tajawal = Tajawal({
 });
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const cleanText = (value: unknown) =>
+  typeof value === "string" ? value.trim() : "";
+
+const getMetadataBase = async () => {
+  const store = await headers();
+  const host = store.get("x-forwarded-host") || store.get("host");
+  if (!host) return undefined;
+
+  const protocol =
+    store.get("x-forwarded-proto") ||
+    (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
+
+  try {
+    return new URL(`${protocol}://${host}`);
+  } catch {
+    return undefined;
+  }
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = db.getPublicConfig();
+  const lang = await readLangFromCookie(cookies);
+  const metadataBase = await getMetadataBase();
+  const title = cleanText(pick(config, "siteTitle", lang)) || "اطلب الحين";
+  const description =
+    cleanText(pick(config, "siteTagline", lang)) ||
+    "اطلب من تطبيق التوصيل المفضل لديك";
+  const logo = cleanText(config.siteLogo) || "/favicon.ico";
+
   return {
-    title: config.siteTitle || "اطلب الحين",
-    description: config.siteTagline || "اطلب من تطبيق التوصيل المفضل لديك",
+    metadataBase,
+    title,
+    description,
+    applicationName: title,
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      siteName: title,
+      locale: lang === "en" ? "en_US" : "ar_SA",
+      images: [{ url: logo, alt: title }],
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+      images: [logo],
+    },
     icons: {
-      icon: config.siteLogo || "/favicon.ico",
-      apple: config.siteLogo || "/favicon.ico",
+      icon: logo,
+      apple: logo,
     },
   };
 }

@@ -847,7 +847,7 @@ function SettingsTab({ config, setConfig, save }) {
     <div className="space-y-6">
       <Card>
         <h3 className="mb-4 text-lg font-bold text-[color:var(--brand-dark)]">معلومات الموقع (عربي / إنجليزي)</h3>
-        <p className="mb-4 text-xs text-[color:var(--muted)]">إذا تركت الحقل الإنجليزي فارغاً، سيُعرض النص العربي كبديل</p>
+        <p className="mb-4 text-xs text-[color:var(--muted)]">عنوان الموقع والوصف يظهران في تبويب المتصفح ومعاينة الرابط في واتساب. إذا تركت الحقل الإنجليزي فارغاً، سيُعرض النص العربي كبديل.</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <BilingualField label="عنوان الموقع" arKey="siteTitle" config={config} setConfig={setConfig}
             placeholderAr="اطلب الحين" placeholderEn="Order Now" />
@@ -945,9 +945,22 @@ export default function Admin() {
   useEffect(() => { reload(); }, []);
 
   const saveConfig = async () => {
-    await fetch('/api/config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
-    setToastMsg('تم الحفظ');
-    reload();
+    try {
+      const res = await fetch('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'فشل حفظ الإعدادات');
+      }
+      setToastMsg('تم الحفظ');
+      await reload();
+      router.refresh();
+    } catch (error) {
+      setToastMsg(error.message || 'فشل حفظ الإعدادات');
+    }
   };
 
   const logout = async () => {
