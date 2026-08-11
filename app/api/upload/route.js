@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { cookies } from 'next/headers';
+import { isAuthenticated } from '@/lib/auth';
 
 const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
 
@@ -15,14 +15,8 @@ const MAX_SIZE = {
   video: 50 * 1024 * 1024
 };
 
-async function requireAuth() {
-  const store = await cookies();
-  const token = store.get('auth_token');
-  return token && token.value === 'authenticated';
-}
-
 export async function POST(request) {
-  if (!(await requireAuth())) {
+  if (!(await isAuthenticated())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -55,7 +49,7 @@ export async function POST(request) {
     fs.writeFileSync(filepath, buffer);
 
     return NextResponse.json({ url: `/uploads/${filename}`, name: file.name, size: file.size });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'فشل رفع الملف' }, { status: 500 });
   }
 }

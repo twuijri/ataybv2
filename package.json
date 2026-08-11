@@ -1,7 +1,13 @@
 {
-  "name": "link-manager-clean",
-  "version": "0.1.0",
+  "name": "link-page-manager",
+  "version": "1.0.0",
+  "description": "A self-hosted bilingual link page with an admin dashboard and Docker support.",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/twuijri/link-page-manager.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

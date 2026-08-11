@@ -1,27 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Login() {
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [setupRequired, setSetupRequired] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    fetch('/api/auth/setup', { cache: 'no-store' })
+      .then(async (res) => {
+        if (!res.ok) throw new Error('تعذر التحقق من حالة الإعداد');
+        return res.json();
+      })
+      .then((data) => setSetupRequired(Boolean(data.setupRequired)))
+      .catch((err) => {
+        setError(err.message);
+        setSetupRequired(false);
+      });
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (setupRequired && password !== confirmPassword) {
+      setError('كلمتا المرور غير متطابقتين');
+      return;
+    }
+
     setLoading(true);
-    const res = await fetch('/api/auth/login', {
+    const endpoint = setupRequired ? '/api/auth/setup' : '/api/auth/login';
+    const payload = setupRequired
+      ? { password, confirmPassword }
+      : { username: 'admin', password };
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify(payload)
     });
+    const body = await res.json().catch(() => ({}));
     setLoading(false);
-    if (res.ok) router.push('/admin');
-    else setError('اسم المستخدم أو كلمة المرور غير صحيحة');
+    if (res.ok) {
+      router.replace('/admin');
+      router.refresh();
+    } else if (body.setupRequired) {
+      setSetupRequired(true);
+      setError('أكمل إعداد كلمة المرور أولاً');
+    } else {
+      setError(body.error || (setupRequired ? 'تعذر إنشاء كلمة المرور' : 'كلمة المرور غير صحيحة'));
+    }
   };
 
   return (
@@ -40,8 +72,10 @@ export default function Login() {
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </div>
-          <h1 className="text-2xl font-extrabold">لوحة التحكم</h1>
-          <p className="mt-1 text-sm opacity-80">يرجى تسجيل الدخول للمتابعة</p>
+          <h1 className="text-2xl font-extrabold">{setupRequired ? 'إعداد لوحة التحكم' : 'لوحة التحكم'}</h1>
+          <p className="mt-1 text-sm opacity-80">
+            {setupRequired ? 'أنشئ كلمة مرور آمنة للبدء' : 'سجّل الدخول للمتابعة'}
+          </p>
         </div>
 
         <form
@@ -53,11 +87,10 @@ export default function Login() {
             <label className="mb-1.5 block text-sm font-bold text-[color:var(--brand-dark)]">اسم المستخدم</label>
             <input
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-3 text-right outline-none transition focus:border-[color:var(--brand)] focus:bg-white focus:ring-4 focus:ring-[color:var(--accent-light)]"
-              placeholder="admin"
+              value="admin"
+              readOnly
+              className="w-full rounded-xl border border-[#E6D9C0] bg-[#EEE7DC] px-4 py-3 text-left text-[color:var(--muted)] outline-none"
+              dir="ltr"
             />
           </div>
 
@@ -68,10 +101,27 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={setupRequired ? 8 : undefined}
               className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-3 text-right outline-none transition focus:border-[color:var(--brand)] focus:bg-white focus:ring-4 focus:ring-[color:var(--accent-light)]"
               placeholder="••••••••"
             />
           </div>
+
+          {setupRequired && (
+            <div className="mb-5">
+              <label className="mb-1.5 block text-sm font-bold text-[color:var(--brand-dark)]">تأكيد كلمة المرور</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={8}
+                className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-3 text-right outline-none transition focus:border-[color:var(--brand)] focus:bg-white focus:ring-4 focus:ring-[color:var(--accent-light)]"
+                placeholder="••••••••"
+              />
+              <p className="mt-1.5 text-xs text-[color:var(--muted)]">8 أحرف على الأقل. اسم المستخدم ثابت: admin</p>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">
@@ -81,14 +131,16 @@ export default function Login() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || setupRequired === null}
             className="w-full rounded-xl bg-[color:var(--brand)] px-5 py-3 font-bold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
           >
-            {loading ? 'جاري الدخول...' : 'تسجيل الدخول'}
+            {loading
+              ? (setupRequired ? 'جاري إنشاء الحساب...' : 'جاري الدخول...')
+              : (setupRequired ? 'إنشاء كلمة المرور والمتابعة' : 'تسجيل الدخول')}
           </button>
 
           <p className="mt-4 text-center text-xs text-[color:var(--muted)]">
-            الافتراضي: admin / password
+            {setupRequired ? 'لن تكون هناك كلمة مرور افتراضية.' : 'اسم المستخدم: admin'}
           </p>
         </form>
       </div>

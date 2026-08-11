@@ -1,19 +1,13 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
-
-async function requireAuth() {
-  const store = await cookies();
-  const token = store.get('auth_token');
-  return token && token.value === 'authenticated';
-}
+import { isAuthenticated } from '@/lib/auth';
 
 export async function GET() {
   return NextResponse.json(db.getSocial());
 }
 
 export async function POST(request) {
-  if (!(await requireAuth())) {
+  if (!(await isAuthenticated())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { platform, url } = await request.json();
@@ -30,7 +24,7 @@ export async function POST(request) {
 }
 
 export async function PUT(request) {
-  if (!(await requireAuth())) {
+  if (!(await isAuthenticated())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { id, platform, url } = await request.json();
@@ -44,7 +38,7 @@ export async function PUT(request) {
 }
 
 export async function DELETE(request) {
-  if (!(await requireAuth())) {
+  if (!(await isAuthenticated())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { searchParams } = new URL(request.url);

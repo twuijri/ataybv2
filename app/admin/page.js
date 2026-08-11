@@ -1,3 +1,5 @@
+/* Dashboard previews use user-provided files from the persistent uploads volume. */
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -696,7 +698,7 @@ function AppearanceTab({ config, setConfig, save, toast }) {
               </label>
               {config.backgroundImage && (
                 <>
-                  <img src={config.backgroundImage} className="h-11 w-16 rounded-lg object-cover ring-1 ring-black/10" />
+                  <img src={config.backgroundImage} alt="" className="h-11 w-16 rounded-lg object-cover ring-1 ring-black/10" />
                   <button onClick={() => setConfig({ ...config, backgroundImage: null })} className="text-xs text-red-600 underline">إزالة</button>
                 </>
               )}
@@ -850,7 +852,7 @@ function SettingsTab({ config, setConfig, save }) {
         <p className="mb-4 text-xs text-[color:var(--muted)]">عنوان الموقع والوصف يظهران في تبويب المتصفح ومعاينة الرابط في واتساب. إذا تركت الحقل الإنجليزي فارغاً، سيُعرض النص العربي كبديل.</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <BilingualField label="عنوان الموقع" arKey="siteTitle" config={config} setConfig={setConfig}
-            placeholderAr="اطلب الحين" placeholderEn="Order Now" />
+            placeholderAr="روابطي" placeholderEn="My Links" />
           <BilingualField label="وصف قصير" arKey="siteTagline" config={config} setConfig={setConfig}
             placeholderAr="اختر تطبيق التوصيل المفضل" placeholderEn="Pick your favorite delivery app" />
           <div className="md:col-span-2">
@@ -870,11 +872,7 @@ function SettingsTab({ config, setConfig, save }) {
 }
 
 function AccountTab({ toast }) {
-  const [form, setForm] = useState({ currentPassword: '', newUsername: '', newPassword: '' });
-
-  useEffect(() => {
-    fetch('/api/account').then(r => r.json()).then(d => { setForm(f => ({ ...f, newUsername: d.adminUsername || '' })); });
-  }, []);
+  const [form, setForm] = useState({ currentPassword: '', newPassword: '' });
 
   const save = async (e) => {
     e.preventDefault();
@@ -885,7 +883,7 @@ function AccountTab({ toast }) {
     });
     if (res.ok) {
       toast('تم تحديث الحساب');
-      setForm({ ...form, currentPassword: '', newPassword: '' });
+      setForm({ currentPassword: '', newPassword: '' });
     } else {
       const j = await res.json();
       toast(j.error || 'فشل التحديث');
@@ -903,13 +901,13 @@ function AccountTab({ toast }) {
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-bold">اسم المستخدم الجديد</label>
-            <input value={form.newUsername} onChange={e => setForm({ ...form, newUsername: e.target.value })}
-              className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 outline-none focus:border-[color:var(--brand)]" />
+            <label className="mb-1 block text-sm font-bold">اسم المستخدم</label>
+            <input value="admin" readOnly dir="ltr"
+              className="w-full rounded-xl border border-[#E6D9C0] bg-[#EEE7DC] px-4 py-2.5 text-left text-[color:var(--muted)] outline-none" />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-bold">كلمة مرور جديدة (اختياري)</label>
-            <input type="password" value={form.newPassword} onChange={e => setForm({ ...form, newPassword: e.target.value })}
+            <label className="mb-1 block text-sm font-bold">كلمة مرور جديدة</label>
+            <input required minLength={8} type="password" value={form.newPassword} onChange={e => setForm({ ...form, newPassword: e.target.value })}
               className="w-full rounded-xl border border-[#E6D9C0] bg-[color:var(--surface)] px-4 py-2.5 outline-none focus:border-[color:var(--brand)]" />
           </div>
         </div>

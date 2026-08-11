@@ -38,10 +38,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const config = db.getPublicConfig();
   const lang = await readLangFromCookie(cookies);
   const metadataBase = await getMetadataBase();
-  const title = cleanText(pick(config, "siteTitle", lang)) || "اطلب الحين";
+  const title = cleanText(pick(config, "siteTitle", lang)) || (lang === "en" ? "My Links" : "روابطي");
   const description =
     cleanText(pick(config, "siteTagline", lang)) ||
-    "اطلب من تطبيق التوصيل المفضل لديك";
+    (lang === "en" ? "Choose your preferred way to connect" : "اختر طريقتك المفضلة للتواصل");
   const logo = cleanText(config.siteLogo) || "/favicon.ico";
 
   return {

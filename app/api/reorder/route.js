@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
-
-async function requireAuth() {
-  const store = await cookies();
-  const token = store.get('auth_token');
-  return token && token.value === 'authenticated';
-}
+import { isAuthenticated } from '@/lib/auth';
 
 export async function POST(request) {
-  if (!(await requireAuth())) {
+  if (!(await isAuthenticated())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { ids, type = 'links' } = await request.json();

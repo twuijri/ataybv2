@@ -1,26 +1,25 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
-
-async function requireAuth() {
-  const store = await cookies();
-  const token = store.get('auth_token');
-  return token && token.value === 'authenticated';
-}
+import { isAuthenticated } from '@/lib/auth';
 
 export async function GET() {
-  if (!(await requireAuth())) {
+  if (!(await isAuthenticated())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  return NextResponse.json(db.getConfig());
+  return NextResponse.json(db.getPublicConfig());
 }
 
 export async function PUT(request) {
-  if (!(await requireAuth())) {
+  if (!(await isAuthenticated())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const body = await request.json();
-  const { adminUsername, adminPassword, ...safe } = body;
+  const safe = { ...body };
+  delete safe.adminUsername;
+  delete safe.adminPassword;
+  delete safe.authSecret;
+  delete safe.setupCompleted;
+  delete safe.configVersion;
   db.saveConfig(safe);
   return NextResponse.json({ success: true });
 }

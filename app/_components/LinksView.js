@@ -1,3 +1,5 @@
+/* User-provided images are served directly from the persistent uploads volume. */
+/* eslint-disable @next/next/no-img-element */
 import SocialIcon, { SOCIAL_LABELS, SOCIAL_LABELS_EN } from './SocialIcon';
 import BackgroundVideo from './BackgroundVideo';
 import LangToggle from './LangToggle';
