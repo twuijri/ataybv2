@@ -38,29 +38,29 @@ export async function generateMetadata(): Promise<Metadata> {
   const config = db.getPublicConfig();
   const lang = await readLangFromCookie(cookies);
   const metadataBase = await getMetadataBase();
-  const title = cleanText(pick(config, "siteTitle", lang)) || (lang === "en" ? "My Links" : "روابطي");
+  const title =
+    cleanText(pick(config, "metaTitle", lang)) ||
+    cleanText(pick(config, "siteTitle", lang));
   const description =
-    cleanText(pick(config, "siteTagline", lang)) ||
-    (lang === "en" ? "Choose your preferred way to connect" : "اختر طريقتك المفضلة للتواصل");
+    cleanText(pick(config, "metaDescription", lang)) ||
+    cleanText(pick(config, "siteTagline", lang));
   const logo = cleanText(config.siteLogo) || "/favicon.ico";
 
   return {
     metadataBase,
-    title,
-    description,
-    applicationName: title,
+    ...(title ? { title, applicationName: title } : {}),
+    ...(description ? { description } : {}),
     openGraph: {
       type: "website",
-      title,
-      description,
-      siteName: title,
+      ...(title ? { title, siteName: title } : {}),
+      ...(description ? { description } : {}),
       locale: lang === "en" ? "en_US" : "ar_SA",
-      images: [{ url: logo, alt: title }],
+      images: [{ url: logo, alt: title || "Link preview" }],
     },
     twitter: {
       card: "summary",
-      title,
-      description,
+      ...(title ? { title } : {}),
+      ...(description ? { description } : {}),
       images: [logo],
     },
     icons: {

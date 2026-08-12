@@ -5,7 +5,8 @@ A self-hosted, bilingual link-in-bio page with a built-in administration dashboa
 ## Features
 
 - Arabic RTL and English interfaces
-- Custom site title, description, logo, favicon, colors, and footer
+- Independent on-page and link-preview titles/descriptions
+- Custom logo, favicon, colors, and footer
 - Dynamic browser, Open Graph, WhatsApp, and Twitter metadata
 - Background images and looping background videos
 - Link groups and nested pages

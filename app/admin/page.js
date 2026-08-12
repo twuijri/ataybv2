@@ -848,18 +848,32 @@ function SettingsTab({ config, setConfig, save }) {
   return (
     <div className="space-y-6">
       <Card>
-        <h3 className="mb-4 text-lg font-bold text-[color:var(--brand-dark)]">معلومات الموقع (عربي / إنجليزي)</h3>
-        <p className="mb-4 text-xs text-[color:var(--muted)]">عنوان الموقع والوصف يظهران في تبويب المتصفح ومعاينة الرابط في واتساب. إذا تركت الحقل الإنجليزي فارغاً، سيُعرض النص العربي كبديل.</p>
+        <h3 className="mb-4 text-lg font-bold text-[color:var(--brand-dark)]">المحتوى الظاهر داخل الصفحة</h3>
+        <p className="mb-4 text-xs text-[color:var(--muted)]">يمكن ترك عنوان العرض والوصف فارغين إذا كان الشعار يحتوي على اسم الموقع. إذا تركت الحقل الإنجليزي فارغاً، سيُعرض النص العربي كبديل.</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <BilingualField label="عنوان الموقع" arKey="siteTitle" config={config} setConfig={setConfig}
+          <BilingualField label="عنوان العرض" arKey="siteTitle" config={config} setConfig={setConfig}
             placeholderAr="روابطي" placeholderEn="My Links" />
-          <BilingualField label="وصف قصير" arKey="siteTagline" config={config} setConfig={setConfig}
+          <BilingualField label="الوصف الظاهر" arKey="siteTagline" config={config} setConfig={setConfig}
             placeholderAr="اختر تطبيق التوصيل المفضل" placeholderEn="Pick your favorite delivery app" />
           <div className="md:col-span-2">
             <BilingualField label="نص الفوتر" arKey="footerText" config={config} setConfig={setConfig}
               placeholderAr="© 2026 جميع الحقوق محفوظة" placeholderEn="© 2026 All rights reserved" />
           </div>
         </div>
+      </Card>
+
+      <Card>
+        <h3 className="mb-4 text-lg font-bold text-[color:var(--brand-dark)]">المتصفح ومعاينة مشاركة الرابط</h3>
+        <p className="mb-4 text-xs text-[color:var(--muted)]">هذه البيانات لا تظهر داخل تصميم الصفحة؛ تستخدم في عنوان تبويب المتصفح ومعاينة الرابط في سناب وواتساب ومنصات التواصل.</p>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <BilingualField label="عنوان المتصفح والمشاركة" arKey="metaTitle" config={config} setConfig={setConfig}
+            placeholderAr="اسم الموقع أو النشاط" placeholderEn="Website or business name" />
+          <BilingualField label="وصف معاينة الرابط" arKey="metaDescription" config={config} setConfig={setConfig}
+            placeholderAr="وصف مختصر يظهر عند مشاركة الرابط" placeholderEn="A short link preview description" />
+        </div>
+        <p className="mt-4 rounded-xl bg-[color:var(--surface)] px-4 py-3 text-xs text-[color:var(--muted)] ring-1 ring-black/5">
+          إذا تُرك عنوان المشاركة فارغاً، سيستخدم الموقع عنوان العرض إن وجد، ولن يضيف كلمة «روابطي» تلقائياً.
+        </p>
       </Card>
 
       <div className="sticky bottom-4 flex justify-end">
